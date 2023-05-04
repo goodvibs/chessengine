@@ -11,21 +11,19 @@ use utils::*;
 
 fn main() {
     // let occupancies = generate_occupancies(get_orthogonals);
-    // println!("{}", occupancies.len());
-    // for blocking_masks in occupancies {
-    //     println!("{}", blocking_masks.len());
-    //     print_bitboard(blocking_masks[16383]);
-    //     for blocking_mask in blocking_masks {
-    //         // print_bitboard(blocking_mask);
-    //         // println!();
-    //     }
+    // let attack_masks = generate_attack_masks(&occupancies, get_r_moves);
+    // let mut attack_mask_indices = Vec::new();
+    // for blocking_board in &occupancies[0] {
+    //     attack_mask_indices.push(attack_masks[0].binary_search(&get_r_moves(1, *blocking_board)).unwrap());
     // }
+    // let magic_number = find_magic_number(&occupancies[0], &attack_mask_indices);
+    // println!("{:?}", magic_number);
 
     let origin_cb = [
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -33,16 +31,15 @@ fn main() {
     ];
     let occupancy_cb = [
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', 'x', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ']
     ];
-    let origin = charboard_to_bitboard(origin_cb);
-    let occupancy = charboard_to_bitboard(occupancy_cb);
-    let rook_moves = get_r_moves(origin, occupancy);
-    print_bitboard(rook_moves);
+    let origin: u64 = charboard_to_bitboard(origin_cb);
+    let occupancy: u64 = charboard_to_bitboard(occupancy_cb);
+    print_bitboard(get_b_moves(origin, occupancy));
 }

@@ -3,6 +3,7 @@
 #![allow(unused_imports)]
 #![allow(unused_mut)]
 
+use std::cmp;
 use std::collections::HashSet;
 use rand::{Rng, RngCore};
 
@@ -167,18 +168,18 @@ pub const CROPPED_ANTIDIAGONALS: [u64; 15] = [
 ];
 
 pub struct Board {
-    wp: u64,
-    wn: u64,
-    wb: u64,
-    wr: u64,
-    wq: u64,
-    wk: u64,
-    bp: u64,
-    bn: u64,
-    bb: u64,
-    br: u64,
-    bq: u64,
-    bk: u64,
+    pub wp: u64,
+    pub wn: u64,
+    pub wb: u64,
+    pub wr: u64,
+    pub wq: u64,
+    pub wk: u64,
+    pub bp: u64,
+    pub bn: u64,
+    pub bb: u64,
+    pub br: u64,
+    pub bq: u64,
+    pub bk: u64,
 }
 
 /// converts a charboard (2d array of chars) to a bitboard (u64)
@@ -338,13 +339,13 @@ pub fn get_r_moves(origin: u64, occupancy: u64) -> u64 {
     let mut res: u64 = 0;
     let leading_zeros: u32 = origin.leading_zeros();
     let trailing_zeros: u32 = 64 - leading_zeros - 1;
-    let n_distance: u32 = leading_zeros / 8;
-    let s_distance: u32 = trailing_zeros / 8;
+    let n_distance: u32 = trailing_zeros / 8;
+    let s_distance: u32 = leading_zeros / 8;
     let e_distance: u32 = leading_zeros % 8;
     let w_distance: u32 = trailing_zeros % 8;
     let mut is_blocked: bool = false;
     for i in 0..n_distance {
-        let pos = origin << (8 * (i+1));
+        let pos = origin >> (8 * (i+1));
         if occupancy & pos != 0 {
             is_blocked = true;
         }
@@ -354,7 +355,7 @@ pub fn get_r_moves(origin: u64, occupancy: u64) -> u64 {
     }
     is_blocked = false;
     for i in 0..s_distance {
-        let pos = origin >> (8 * (i+1));
+        let pos = origin << (8 * (i+1));
         if occupancy & pos != 0 {
             is_blocked = true;
         }
@@ -375,6 +376,57 @@ pub fn get_r_moves(origin: u64, occupancy: u64) -> u64 {
     is_blocked = false;
     for i in 0..w_distance {
         let pos = origin >> (i+1);
+        if occupancy & pos != 0 {
+            is_blocked = true;
+        }
+        if !is_blocked {
+            res |= pos;
+        }
+    }
+    res
+}
+
+pub fn get_b_moves(origin: u64, occupancy: u64) -> u64 {
+    let mut res: u64 = 0;
+    let leading_zeros: u32 = origin.leading_zeros();
+    let trailing_zeros: u32 = 64 - leading_zeros - 1;
+    let n_distance: u32 = trailing_zeros / 8;
+    let s_distance: u32 = leading_zeros / 8;
+    let e_distance: u32 = leading_zeros % 8;
+    let w_distance: u32 = trailing_zeros % 8;
+    let mut is_blocked: bool = false;
+    for i in 0..cmp::min(n_distance, e_distance) {
+        let pos = origin >> (7 * (i+1));
+        if occupancy & pos != 0 {
+            is_blocked = true;
+        }
+        if !is_blocked {
+            res |= pos;
+        }
+    }
+    is_blocked = false;
+    for i in 0..cmp::min(s_distance, w_distance) {
+        let pos = origin << (7 * (i+1));
+        if occupancy & pos != 0 {
+            is_blocked = true;
+        }
+        if !is_blocked {
+            res |= pos;
+        }
+    }
+    is_blocked = false;
+    for i in 0..cmp::min(s_distance, e_distance) {
+        let pos = origin << (9 * (i+1));
+        if occupancy & pos != 0 {
+            is_blocked = true;
+        }
+        if !is_blocked {
+            res |= pos;
+        }
+    }
+    is_blocked = false;
+    for i in 0..cmp::min(n_distance, w_distance) {
+        let pos = origin >> (9 * (i+1));
         if occupancy & pos != 0 {
             is_blocked = true;
         }
