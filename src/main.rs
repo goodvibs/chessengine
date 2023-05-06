@@ -1,29 +1,23 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
-#![allow(unused_mut)]
 
-mod utils;
+mod board;
 mod magic;
 
 use magic::*;
-use utils::*;
+use board::*;
 
 fn main() {
-    // let occupancies = generate_occupancies(get_orthogonals);
-    // let attack_masks = generate_attack_masks(&occupancies, get_r_moves);
-    // let mut attack_mask_indices = Vec::new();
-    // for blocking_board in &occupancies[0] {
-    //     attack_mask_indices.push(attack_masks[0].binary_search(&get_r_moves(1, *blocking_board)).unwrap());
-    // }
-    // let magic_number = find_magic_number(&occupancies[0], &attack_mask_indices);
-    // println!("{:?}", magic_number);
-
+    let rook_dict = create_r_move_dict();
+    println!("Rook dict created");
+    let bishop_dict = create_b_move_dict();
+    println!("Bishop dict created");
     let origin_cb = [
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', 'x', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -31,15 +25,22 @@ fn main() {
     ];
     let occupancy_cb = [
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ']
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', 'x', ' ', ' ', ' ', 'x', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', 'x', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
     ];
     let origin: u64 = charboard_to_bitboard(origin_cb);
+    println!("{}", origin);
     let occupancy: u64 = charboard_to_bitboard(occupancy_cb);
-    print_bitboard(get_b_moves(origin, occupancy));
+
+    let rook_moves = rook_dict.get_moves(origin, occupancy);
+    print_bitboard(rook_moves);
+    println!("{}", rook_moves);
+
+    print_bitboard(get_r_moves(origin, occupancy));
+    println!("{}", get_r_moves(origin, occupancy));
 }

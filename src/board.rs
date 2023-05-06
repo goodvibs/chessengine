@@ -1,8 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-#![allow(unused_mut)]
-
 use std::cmp;
 use std::collections::HashSet;
 use rand::{Rng, RngCore};
@@ -102,6 +97,8 @@ pub const QUEEN_SIDE_B: u64 = 0x000000000000000E;
 pub const CENTER: u64 = 0x0000001818000000;
 pub const CENTER_EXTENDED: u64 = 0x00003C3C3C3C0000;
 pub const OUTER_EDGES: u64 = 0xFF818181818181FF;
+pub const OUTER_EDGES_TB: u64 = 0xFF000000000000FF;
+pub const OUTER_EDGES_LR: u64 = 0x8181818181818181;
 pub const DIAG_A1_H8: u64 = DIAGONALS[7];
 pub const DIAG_A8_H1: u64 = ANTIDIAGONALS[7];
 pub const RANK_1_2: u64 = RANK_1 | RANK_2;
@@ -110,25 +107,25 @@ pub const FILE_A_B: u64 = FILE_A | FILE_B;
 pub const FILE_G_H: u64 = FILE_G | FILE_H;
 
 pub const CROPPED_FILES: [u64; 8] = [
-    FILE_A & !OUTER_EDGES,
-    FILE_B & !OUTER_EDGES,
-    FILE_C & !OUTER_EDGES,
-    FILE_D & !OUTER_EDGES,
-    FILE_E & !OUTER_EDGES,
-    FILE_F & !OUTER_EDGES,
-    FILE_G & !OUTER_EDGES,
-    FILE_H & !OUTER_EDGES
+    FILE_A & !OUTER_EDGES_TB,
+    FILE_B & !OUTER_EDGES_TB,
+    FILE_C & !OUTER_EDGES_TB,
+    FILE_D & !OUTER_EDGES_TB,
+    FILE_E & !OUTER_EDGES_TB,
+    FILE_F & !OUTER_EDGES_TB,
+    FILE_G & !OUTER_EDGES_TB,
+    FILE_H & !OUTER_EDGES_TB
 ];
 
 pub const CROPPED_RANKS: [u64; 8] = [
-    RANK_1 & !OUTER_EDGES,
-    RANK_2 & !OUTER_EDGES,
-    RANK_3 & !OUTER_EDGES,
-    RANK_4 & !OUTER_EDGES,
-    RANK_5 & !OUTER_EDGES,
-    RANK_6 & !OUTER_EDGES,
-    RANK_7 & !OUTER_EDGES,
-    RANK_8 & !OUTER_EDGES
+    RANK_1 & !OUTER_EDGES_LR,
+    RANK_2 & !OUTER_EDGES_LR,
+    RANK_3 & !OUTER_EDGES_LR,
+    RANK_4 & !OUTER_EDGES_LR,
+    RANK_5 & !OUTER_EDGES_LR,
+    RANK_6 & !OUTER_EDGES_LR,
+    RANK_7 & !OUTER_EDGES_LR,
+    RANK_8 & !OUTER_EDGES_LR
 ];
 
 pub const CROPPED_DIAGONALS: [u64; 15] = [
@@ -312,10 +309,10 @@ pub fn get_diagonals(origin: u64) -> u64 {
 pub fn get_cropped_orthogonals(origin: u64) -> u64 {
     let mut res: u64 = 0;
     for i in 0..8 {
-        if CROPPED_FILES[i] & origin != 0 {
+        if FILES[i] & origin != 0 {
             res |= CROPPED_FILES[i];
         }
-        if CROPPED_RANKS[i] & origin != 0 {
+        if RANKS[i] & origin != 0 {
             res |= CROPPED_RANKS[i];
         }
     }
