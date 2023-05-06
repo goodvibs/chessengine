@@ -28,8 +28,8 @@ fn main() {
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', 'x', ' ', ' ', ' ', 'x', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', 'x', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', 'x', ' '],
         [' ', ' ', ' ', 'x', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
     ];
@@ -37,10 +37,11 @@ fn main() {
     println!("{}", origin);
     let occupancy: u64 = charboard_to_bitboard(occupancy_cb);
 
-    let rook_moves = rook_dict.get_moves(origin, occupancy);
+    let rook_moves = rook_dict.get_moves(origin, occupancy & !origin & get_orthogonals(origin));
     print_bitboard(rook_moves);
     println!("{}", rook_moves);
 
-    print_bitboard(get_r_moves(origin, occupancy));
-    println!("{}", get_r_moves(origin, occupancy));
+    let bishop_moves = bishop_dict.get_moves(origin, occupancy & !origin & get_diagonals(origin));
+    print_bitboard(bishop_moves);
+    println!("{}", bishop_moves);
 }

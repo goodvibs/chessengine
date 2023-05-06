@@ -38,7 +38,7 @@ pub fn create_r_move_dict() -> MoveDict {
         magics = read_magics(ROOK_MAGIC_FILE);
     }
     else {
-        magics = generate_magic_vec(board::get_cropped_orthogonals, board::get_r_moves);
+        magics = generate_magic_vec(board::get_orthogonals, board::get_r_moves);
         write_magics(&magics, ROOK_MAGIC_FILE);
     }
     MoveDict {
