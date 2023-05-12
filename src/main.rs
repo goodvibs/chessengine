@@ -1,17 +1,27 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
-#![allow(unused_imports)]
 
 mod board;
 mod magic;
+mod board_state;
+mod masks;
+mod moves;
 
 use magic::*;
 use board::*;
+use masks::*;
+// use moves::*;
+// use board_state::*;
 
 fn main() {
-    let rook_dict = create_r_move_dict();
+    let board: Board = Board::default();
+    board.print_pretty();
+}
+
+fn test_magics() {
+    let rook_dict = MagicDict::new_rook_dict();
     println!("Rook dict created");
-    let bishop_dict = create_b_move_dict();
+    let bishop_dict = MagicDict::new_bishop_dict();
     println!("Bishop dict created");
     let origin_cb = [
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -29,7 +39,7 @@ fn main() {
         [' ', ' ', 'x', ' ', ' ', ' ', 'x', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', 'x', ' ', ' ', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ', ' ', 'x', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', 'x', ' ', ' ', ' ', ' '],
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
     ];

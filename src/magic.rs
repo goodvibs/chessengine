@@ -1,62 +1,75 @@
-use std::collections::HashSet;
-use rand::{Rng, RngCore};
+use rand::Rng;
 use std::fs::{File, metadata};
-use std::io::{BufWriter, BufReader, Write, Read};
+use std::io::{BufWriter, BufReader};
 use serde::{Serialize, Deserialize};
-use crate::board;
-use crate::board::print_bitboard;
+use crate::moves;
+use crate::masks;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref ROOK_MAGIC_DICT: MagicDict = MagicDict::new_rook_dict();
+    pub static ref BISHOP_MAGIC_DICT: MagicDict = MagicDict::new_bishop_dict();
+}
 
 const ROOK_MAGIC_FILE: &str = "rook_magics.bin";
 const BISHOP_MAGIC_FILE: &str = "bishop_magics.bin";
 
-pub struct MoveDict {
-    pub magic_vec: Vec<Magic>,
+pub struct MagicDict {
+    pub magics: Vec<Magic>
 }
 
-impl MoveDict {
-    pub fn get_moves(&self, pos: u64, blocking_board: u64) -> u64 {
+impl MagicDict {
+    pub fn get_moves(&self, pos: u64, blockers: u64) -> u64 {
         let magic_vec_index: usize = pos.trailing_zeros() as usize;
         println!("magic_vec_index: {}", magic_vec_index);
-        let magic: &Magic = &self.magic_vec[magic_vec_index];
-        let index = magic_index(magic.magic_number, blocking_board, magic.shift);
+        let magic: &Magic = &self.magics[magic_vec_index];
+        let index = magic_index(magic.magic_number, blockers, magic.shift);
         println!("index: {}", index);
-        magic.attack_masks[index]
+        magic.moves[index]
+    }
+
+    pub fn new_rook_dict() -> MagicDict {
+        create_r_magic_dict()
+    }
+
+    pub fn new_bishop_dict() -> MagicDict {
+        create_b_magic_dict()
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Magic {
     pub magic_number: u64,
-    pub mask: u64,
-    pub attack_masks: Vec<u64>,
+    pub blocking_mask: u64,
+    pub moves: Vec<u64>,
     pub shift: u32
 }
 
-pub fn create_r_move_dict() -> MoveDict {
+fn create_r_magic_dict() -> MagicDict {
     let magics: Vec<Magic>;
     if path_exists(ROOK_MAGIC_FILE) {
         magics = read_magics(ROOK_MAGIC_FILE);
     }
     else {
-        magics = generate_magic_vec(board::get_orthogonals, board::get_r_moves);
+        magics = generate_magic_vec(masks::get_orthogonals, moves::get_r_moves);
         write_magics(&magics, ROOK_MAGIC_FILE);
     }
-    MoveDict {
-        magic_vec: magics
+    MagicDict {
+        magics
     }
 }
 
-pub fn create_b_move_dict() -> MoveDict {
+fn create_b_magic_dict() -> MagicDict {
     let magics: Vec<Magic>;
     if path_exists(BISHOP_MAGIC_FILE) {
         magics = read_magics(BISHOP_MAGIC_FILE);
     }
     else {
-        magics = generate_magic_vec(board::get_diagonals, board::get_b_moves);
+        magics = generate_magic_vec(masks::get_diagonals, moves::get_b_moves);
         write_magics(&magics, BISHOP_MAGIC_FILE);
     }
-    MoveDict {
-        magic_vec: magics
+    MagicDict {
+        magics
     }
 }
 
@@ -77,13 +90,13 @@ pub fn write_magics(magics: &Vec<Magic>, file_name: &str) {
     bincode::serialize_into(writer, &magics).unwrap();
 }
 
-pub fn generate_magic_vec(get_blocking_mask: fn(u64) -> u64, get_attack_mask: fn(u64, u64) -> u64) -> Vec<Magic> {
+pub fn generate_magic_vec(get_blocking_mask: fn(u64) -> u64, get_moves: fn(u64, u64) -> u64) -> Vec<Magic> {
     let mut magics: Vec<Magic> = Vec::new();
     let occupancies: Vec<Vec<u64>> = generate_occupancies(get_blocking_mask);
     let mut pos: u64 = 1; // start with bitboard with only the first bit set
     for i in 0..64usize {
-        let blocking_boards: &Vec<u64> = &occupancies[i];
-        let magic: Magic = generate_magic(pos, blocking_boards, get_blocking_mask(pos), get_attack_mask);
+        let blockers: &Vec<u64> = &occupancies[i];
+        let magic: Magic = generate_magic(pos, blockers, get_blocking_mask(pos), get_moves);
         magics.push(magic);
         pos <<= 1; // shift bitboard left by 1
     }
@@ -102,9 +115,9 @@ pub fn generate_magic(pos: u64, blocking_boards: &Vec<u64>, blocking_mask: u64, 
         let mut move_boards_temp: Vec<u64> = vec![0; 1 << index_bits];
         magic_number = rng.gen::<u64>() & rng.gen::<u64>() & rng.gen::<u64>();
         let mut fail = false;
-        for blocking_board in blocking_boards {
-            let index: usize = magic_index(magic_number, *blocking_board, shift);
-            let moves: u64 = get_move_board(pos, *blocking_board);
+        for blockers in blocking_boards {
+            let index: usize = magic_index(magic_number, *blockers, shift);
+            let moves: u64 = get_move_board(pos, *blockers);
             if move_boards_temp[index] != 0 && move_boards_temp[index] != moves {
                 let test = move_boards_temp[index];
                 fail = true;
@@ -113,18 +126,18 @@ pub fn generate_magic(pos: u64, blocking_boards: &Vec<u64>, blocking_mask: u64, 
             move_boards_temp[index] = moves;
         }
         if !fail {
-            for blocking_board in blocking_boards {
-                let index: usize = magic_index(magic_number, *blocking_board, shift);
-                let move_board: u64 = get_move_board(pos, *blocking_board);
-                move_boards[index] = get_move_board(pos, *blocking_board);
+            for blockers in blocking_boards {
+                let index: usize = magic_index(magic_number, *blockers, shift);
+                let move_board: u64 = get_move_board(pos, *blockers);
+                move_boards[index] = get_move_board(pos, *blockers);
             }
             break;
         }
     }
     Magic {
         magic_number: magic_number,
-        mask: blocking_mask,
-        attack_masks: move_boards,
+        blocking_mask: blocking_mask,
+        moves: move_boards,
         shift: shift
     }
 }
@@ -133,8 +146,8 @@ fn magic_index(magic_number: u64, blockers: u64, shift: u32) -> usize {
     blockers.wrapping_mul(magic_number).wrapping_shr(shift) as usize
 }
 
-/// Generates a vector of vectors of all the possible occupancies for each square on the board.
-/// 64 squares, so 64 subvectors. All occupancies in a subvector are unique.
+/// Generates a vector of vectors of all the possible blocking_boards for each square on the board.
+/// 64 squares, so 64 subvectors. All blocking_boards in a subvector are unique.
 pub fn generate_occupancies(get_blocking_mask: fn(u64) -> u64) -> Vec<Vec<u64>> {
     let mut occupancies: Vec<Vec<u64>> = vec![Vec::new(); 64];
     let mut pos: u64 = 1; // start with bitboard with only the first bit set
