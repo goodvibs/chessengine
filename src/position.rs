@@ -2,7 +2,7 @@ use crate::moves::*;
 use crate::board::Board;
 use crate::magic::{BISHOP_MAGIC_DICT, ROOK_MAGIC_DICT};
 
-pub struct BoardState {
+pub struct Position {
     pub board: Board,
     pub player: Color,
     pub turn: Color,
@@ -10,21 +10,29 @@ pub struct BoardState {
     pub halfmove: u8
 }
 
-impl BoardState {
-    pub fn w_get_pawn_moves(&self) -> u64 {
-        get_wp_moves(self.board.wp, self.board.get_w_noncapturable(), self.board.get_b_subjects())
+impl Position {
+    pub fn w_pawn_moves(&self) -> u64 {
+        get_wp_moves(self.board.wp, self.board.get_b_subjects())
     }
 
-    pub fn b_get_pawn_moves(&self) -> u64 {
-        get_bp_moves(self.board.bp, self.board.get_b_noncapturable(), self.board.get_w_subjects())
+    pub fn b_pawn_moves(&self) -> u64 {
+        get_bp_moves(self.board.bp, self.board.get_w_subjects())
+    }
+
+    pub fn w_pawn_captures(&self) -> u64 {
+        get_wp_captures(self.board.wp, self.board.get_b_subjects())
+    }
+
+    pub fn b_pawn_captures(&self) -> u64 {
+        get_bp_captures(self.board.bp, self.board.get_w_subjects())
     }
 
     pub fn w_knight_moves(&self) -> u64 {
-        get_n_moves(self.board.wn, self.board.get_w_noncapturable())
+        get_n_moves_precomp(self.board.wn, self.board.get_w_noncapturable())
     }
 
     pub fn b_knight_moves(&self) -> u64 {
-        get_n_moves(self.board.bn, self.board.get_b_noncapturable())
+        get_n_moves_precomp(self.board.bn, self.board.get_b_noncapturable())
     }
 
     pub fn w_bishop_moves(&self) -> u64 {
@@ -60,6 +68,16 @@ impl BoardState {
     }
 }
 
+fn unflatten_bb(mut bb: u64) -> Vec<u64> {
+    let mut res: Vec<u64> = Vec::new();
+    while bb != 0 {
+        let lsb = bb & bb.wrapping_neg();
+        res.push(lsb);
+        bb ^= lsb;
+    }
+    res
+}
+
 pub struct Context {
     pub wk_castle: bool,
     pub wq_castle: bool,
@@ -81,8 +99,17 @@ impl Default for Context {
 }
 
 pub enum Color {
-    White,
-    Black,
+    White = 0,
+    Black = 1,
+}
+
+impl Color {
+    pub fn flip(&self) -> Color {
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
 }
 
 pub enum Piece {

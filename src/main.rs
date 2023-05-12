@@ -3,19 +3,25 @@
 
 mod board;
 mod magic;
-mod board_state;
+mod position;
 mod masks;
 mod moves;
 
 use magic::*;
 use board::*;
 use masks::*;
+use position::*;
 // use moves::*;
-// use board_state::*;
 
 fn main() {
-    let board: Board = Board::default();
-    board.print_pretty();
+    let pos: Position = Position {
+        board: Board::default(),
+        player: Color::White,
+        turn: Color::White,
+        context: Context::default(),
+        halfmove: 1
+    };
+    print_bitboard(pos.b_knight_moves());
 }
 
 fn test_magics() {

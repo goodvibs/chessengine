@@ -37,31 +37,31 @@ pub struct Board {
 
 impl Board {
     pub fn get_w_subjects(&self) -> u64 {
-        self.wp &
-            self.wn &
-            self.wb &
-            self.wr &
+        self.wp |
+            self.wn |
+            self.wb |
+            self.wr |
             self.wq
     }
 
     pub fn get_b_subjects(&self) -> u64 {
-        self.bp &
-            self.bn &
-            self.bb &
-            self.br &
+        self.bp |
+            self.bn |
+            self.bb |
+            self.br |
             self.bq
     }
 
     pub fn get_kings(&self) -> u64 {
-        self.wk & self.bk
+        self.wk | self.bk
     }
 
     pub fn get_w_noncapturable(&self) -> u64 {
-        self.get_w_subjects() & self.get_kings()
+        self.get_w_subjects() | self.get_kings()
     }
 
     pub fn get_b_noncapturable(&self) -> u64 {
-        self.get_b_subjects() & self.get_kings()
+        self.get_b_subjects() | self.get_kings()
     }
 
     pub fn to_charboard(&self) -> [[char; 8]; 8] {

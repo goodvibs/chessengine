@@ -1,7 +1,40 @@
 use crate::masks::*;
 use std::cmp;
+use lazy_static::lazy_static;
 
-// remember this doesn't take en passant into account
+lazy_static! {
+    pub static ref KNIGHT_TABLE: [u64; 64] = create_knight_table();
+    pub static ref KING_TABLE: [u64; 64] = create_king_table();
+}
+
+fn create_knight_table() -> [u64; 64] {
+    let mut table: [u64; 64] = [0; 64];
+    let mut pos: u64 = 1;
+    for i in 0..64 {
+        table[i] = get_n_moves(pos, 0);
+        pos <<= 1;
+    }
+    table
+}
+
+fn create_king_table() -> [u64; 64] {
+    let mut table: [u64; 64] = [0; 64];
+    let mut pos: u64 = 1;
+    for i in 0..64 {
+        table[i] = get_k_moves(pos, 0);
+        pos <<= 1;
+    }
+    table
+}
+
+pub fn get_n_moves_precomp(origin: u64, occupied: u64) -> u64 {
+    KNIGHT_TABLE[origin.trailing_zeros() as usize] & !occupied
+}
+
+pub fn get_k_moves_precomp(origin: u64, occupied: u64) -> u64 {
+    KING_TABLE[origin.trailing_zeros() as usize] & !occupied
+}
+
 pub fn get_wp_captures(pawns: u64, capturable: u64) -> u64 {
     capturable & (pawns >> 7 & !FILE_A | pawns >> 9 & !FILE_H)
 }
@@ -10,12 +43,24 @@ pub fn get_bp_captures(pawns: u64, capturable: u64) -> u64 {
     capturable & (pawns << 7 & !FILE_H | pawns << 9 & !FILE_A)
 }
 
-pub fn get_wp_moves(pawns: u64, occupied: u64, capturable: u64) -> u64 {
-    (!occupied & (pawns >> 8 & !RANK_1)) | (capturable & (pawns >> 7 & !FILE_A | pawns >> 9 & !FILE_H))
+pub fn get_wp_moves(pawns: u64, occupied: u64) -> u64 {
+    let spp: u64 = !occupied & (pawns >> 8);
+    if spp & RANK_3 == 0 {
+        spp
+    }
+    else {
+        spp | get_wp_moves(spp, occupied)
+    }
 }
 
-pub fn get_bp_moves(pawns: u64, occupied: u64, capturable: u64) -> u64 {
-    (!occupied & (pawns << 8 & !RANK_8)) | (capturable & (pawns << 7 & !FILE_H | pawns << 9 & !FILE_A))
+pub fn get_bp_moves(pawns: u64, occupied: u64) -> u64 {
+    let spp: u64 = !occupied & (pawns << 8);
+    if spp & RANK_6 == 0 {
+        spp
+    }
+    else {
+        spp | get_bp_moves(spp, occupied)
+    }
 }
 
 pub fn get_n_moves(knights: u64, occupied: u64) -> u64 {
@@ -29,15 +74,15 @@ pub fn get_n_moves(knights: u64, occupied: u64) -> u64 {
         (knights << 10 & !FILE_A_B))
 }
 
-pub fn get_k_moves(origin: u64, occupied: u64) -> u64 {
-    !occupied & ((origin >> 1 & !FILE_H) |
-        (origin >> 7 & !FILE_A) |
-        origin >> 8 |
-        (origin >> 9 & !FILE_H) |
-        (origin << 1 & !FILE_A) |
-        (origin << 9 & !FILE_A) |
-        origin << 8 |
-        (origin << 7 & !FILE_H))
+pub fn get_k_moves(kings: u64, occupied: u64) -> u64 {
+    !occupied & ((kings >> 1 & !FILE_H) |
+        (kings >> 7 & !FILE_A) |
+        kings >> 8 |
+        (kings >> 9 & !FILE_H) |
+        (kings << 1 & !FILE_A) |
+        (kings << 9 & !FILE_A) |
+        kings << 8 |
+        (kings << 7 & !FILE_H))
 }
 
 pub fn get_r_moves(origin: u64, occupied: u64) -> u64 {
