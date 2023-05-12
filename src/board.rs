@@ -64,6 +64,10 @@ impl Board {
         self.get_b_subjects() | self.get_kings()
     }
 
+    pub fn get_all(&self) -> u64 {
+        self.get_w_subjects() | self.get_b_subjects() | self.get_kings()
+    }
+
     pub fn to_charboard(&self) -> [[char; 8]; 8] {
         charboardify(self)
     }

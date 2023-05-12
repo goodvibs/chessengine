@@ -21,7 +21,9 @@ fn main() {
         context: Context::default(),
         halfmove: 1
     };
-    print_bitboard(pos.b_knight_moves());
+    for bb in pos.w_knight_moves() {
+        bb.board.print_pretty();
+    }
 }
 
 fn test_magics() {
