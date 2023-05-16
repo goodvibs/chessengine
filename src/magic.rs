@@ -21,10 +21,8 @@ pub struct MagicDict {
 impl MagicDict {
     pub fn get_moves(&self, pos: u64, blockers: u64) -> u64 {
         let magic_vec_index: usize = pos.trailing_zeros() as usize;
-        println!("magic_vec_index: {}", magic_vec_index);
         let magic: &Magic = &self.magics[magic_vec_index];
         let index = magic_index(magic.magic_number, blockers, magic.shift);
-        println!("index: {}", index);
         magic.moves[index]
     }
 

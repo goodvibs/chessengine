@@ -268,12 +268,13 @@ impl Position {
         let mut res: Vec<Position> = Vec::new();
         let blockers: u64 = self.board.get_all();
         let capturable: u64 = self.board.get_b_subjects();
-        for pos in unflatten_bb(self.board.wp) {
+        for pos in unpack_bb(self.board.wp) {
             res.push(
                 self.create_variant(
                     Piece::Pawn,
                     get_wp_moves(pos, blockers) |
-                        get_wp_captures(self.board.wp, capturable)
+                        get_wp_captures(pos, capturable) |
+                        (self.board.wp ^ pos)
                 ));
         }
         res
@@ -283,12 +284,13 @@ impl Position {
         let mut res: Vec<Position> = Vec::new();
         let blockers: u64 = self.board.get_all();
         let capturable: u64 = self.board.get_w_subjects();
-        for pos in unflatten_bb(self.board.bp) {
+        for pos in unpack_bb(self.board.bp) {
             res.push(
                 self.create_variant(
                     Piece::Pawn,
                     get_bp_moves(pos, blockers) |
-                        get_bp_captures(self.board.bp, capturable)
+                        get_bp_captures(pos, capturable) |
+                        (self.board.bp ^ pos)
                 ));
         }
         res
@@ -297,11 +299,12 @@ impl Position {
     pub fn w_knight_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unflatten_bb(self.board.wn) {
+        for pos in unpack_bb(self.board.wn) {
             res.push(
                 self.create_variant(
                     Piece::Knight,
-                    get_n_moves_precomp(pos, noncapturable)
+                    get_n_moves_precomp(pos, noncapturable) |
+                        (self.board.wn ^ pos)
                 ));
         }
         res
@@ -310,11 +313,12 @@ impl Position {
     pub fn b_knight_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unflatten_bb(self.board.bn) {
+        for pos in unpack_bb(self.board.bn) {
             res.push(
                 self.create_variant(
                     Piece::Knight,
-                    get_n_moves_precomp(pos, noncapturable)
+                    get_n_moves_precomp(pos, noncapturable) |
+                        (self.board.bn ^ pos)
                 ));
         }
         res
@@ -323,11 +327,12 @@ impl Position {
     pub fn w_bishop_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unflatten_bb(self.board.wb) {
+        for pos in unpack_bb(self.board.wb) {
             res.push(
                 self.create_variant(
                     Piece::Bishop,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable)
+                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.wb ^ pos)
                 ));
         }
         res
@@ -336,11 +341,12 @@ impl Position {
     pub fn b_bishop_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unflatten_bb(self.board.bb) {
+        for pos in unpack_bb(self.board.bb) {
             res.push(
                 self.create_variant(
                     Piece::Bishop,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable)
+                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.bb ^ pos)
                 ));
         }
         res
@@ -349,11 +355,12 @@ impl Position {
     pub fn w_rook_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unflatten_bb(self.board.wr) {
+        for pos in unpack_bb(self.board.wr) {
             res.push(
                 self.create_variant(
                     Piece::Rook,
-                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable)
+                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.wr ^ pos)
                 ));
         }
         res
@@ -362,11 +369,12 @@ impl Position {
     pub fn b_rook_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unflatten_bb(self.board.br) {
+        for pos in unpack_bb(self.board.br) {
             res.push(
                 self.create_variant(
                     Piece::Rook,
-                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable)
+                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.br ^ pos)
                 ));
         }
         res
@@ -375,12 +383,13 @@ impl Position {
     pub fn w_queen_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unflatten_bb(self.board.wq) {
+        for pos in unpack_bb(self.board.wq) {
             res.push(
                 self.create_variant(
                     Piece::Queen,
                     BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable)
+                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.wq ^ pos)
                 ));
         }
         res
@@ -389,12 +398,13 @@ impl Position {
     pub fn b_queen_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unflatten_bb(self.board.bq) {
+        for pos in unpack_bb(self.board.bq) {
             res.push(
                 self.create_variant(
                     Piece::Queen,
                     BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable)
+                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
+                        (self.board.bq ^ pos)
                 ));
         }
         res
@@ -403,11 +413,12 @@ impl Position {
     pub fn w_king_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unflatten_bb(self.board.wk) {
+        for pos in unpack_bb(self.board.wk) {
             res.push(
                 self.create_variant(
                     Piece::King,
-                    get_k_moves_precomp(pos, noncapturable)
+                    get_k_moves_precomp(pos, noncapturable) |
+                        (self.board.wk ^ pos)
                 ));
         }
         res
@@ -416,7 +427,7 @@ impl Position {
     pub fn b_king_moves(&self) -> Vec<Position> {
         let mut res: Vec<Position> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unflatten_bb(self.board.bk) {
+        for pos in unpack_bb(self.board.bk) {
             res.push(
                 self.create_variant(
                     Piece::King,
@@ -427,7 +438,7 @@ impl Position {
     }
 }
 
-fn unflatten_bb(mut bb: u64) -> Vec<u64> {
+pub fn unpack_bb(mut bb: u64) -> Vec<u64> {
     let mut res: Vec<u64> = Vec::new();
     while bb != 0 {
         let lsb = bb & bb.wrapping_neg();

@@ -1,10 +1,17 @@
 use crate::masks::*;
 use std::cmp;
 use lazy_static::lazy_static;
+use crate::position::Piece;
 
 lazy_static! {
     pub static ref KNIGHT_TABLE: [u64; 64] = create_knight_table();
     pub static ref KING_TABLE: [u64; 64] = create_king_table();
+}
+
+pub struct Move {
+    pub origin: u8,
+    pub dest: u8,
+    pub promotion: Option<Piece>
 }
 
 fn create_knight_table() -> [u64; 64] {
