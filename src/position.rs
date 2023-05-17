@@ -1,451 +1,451 @@
-use crate::moves::*;
+use crate::moves_masks::*;
 use crate::board::Board;
 use crate::magic::{BISHOP_MAGIC_DICT, ROOK_MAGIC_DICT};
+use crate::board::unpack_bb;
+use crate::mcts::Move;
+use crate::const_masks::*;
 
 pub struct Position {
     pub board: Board,
     pub player: Color,
-    pub turn: Color,
     pub context: Context,
-    pub halfmove: u8
 }
 
 impl Position {
-    pub fn create_variant(&self, modified: Piece, new_bb: u64) -> Position {
-        match self.turn {
-            Color::White => {
-                match modified {
-                    Piece::Pawn => Position {
-                        board: Board {
-                            wp: new_bb,
-                            wn: self.board.wn,
-                            wb: self.board.wb,
-                            wr: self.board.wr,
-                            wq: self.board.wq,
-                            wk: self.board.wk,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Knight => Position {
-                        board: Board {
-                            wp: self.board.wp,
-                            wn: new_bb,
-                            wb: self.board.wb,
-                            wr: self.board.wr,
-                            wq: self.board.wq,
-                            wk: self.board.wk,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Bishop => Position {
-                        board: Board {
-                            wp: self.board.wp,
-                            wn: self.board.wn,
-                            wb: new_bb,
-                            wr: self.board.wr,
-                            wq: self.board.wq,
-                            wk: self.board.wk,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Rook => Position {
-                        board: Board {
-                            wp: self.board.wp,
-                            wn: self.board.wn,
-                            wb: self.board.wb,
-                            wr: new_bb,
-                            wq: self.board.wq,
-                            wk: self.board.wk,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Queen => Position {
-                        board: Board {
-                            wp: self.board.wp,
-                            wn: self.board.wn,
-                            wb: self.board.wb,
-                            wr: self.board.wr,
-                            wq: new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::King => Position {
-                        board: Board {
-                            wp: self.board.wp,
-                            wn: self.board.wn,
-                            wb: self.board.wb,
-                            wr: self.board.wr,
-                            wq: self.board.wq,
-                            wk: new_bb,
-                            bp: self.board.bp & !new_bb,
-                            bn: self.board.bn & !new_bb,
-                            bb: self.board.bb & !new_bb,
-                            br: self.board.br & !new_bb,
-                            bq: self.board.bq & !new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::Black,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    }
-                }
-            }
-            Color::Black => {
-                match modified {
-                    Piece::Pawn => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: new_bb,
-                            bn: self.board.bn,
-                            bb: self.board.bb,
-                            br: self.board.br,
-                            bq: self.board.bq,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Knight => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp,
-                            bn: new_bb,
-                            bb: self.board.bb,
-                            br: self.board.br,
-                            bq: self.board.bq,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Bishop => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp,
-                            bn: self.board.bn,
-                            bb: new_bb,
-                            br: self.board.br,
-                            bq: self.board.bq,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Rook => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp,
-                            bn: self.board.bn,
-                            bb: self.board.bb,
-                            br: new_bb,
-                            bq: self.board.bq,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::Queen => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp,
-                            bn: self.board.bn,
-                            bb: self.board.bb,
-                            br: self.board.br,
-                            bq: new_bb,
-                            bk: self.board.bk
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    },
-                    Piece::King => Position {
-                        board: Board {
-                            wp: self.board.wp & !new_bb,
-                            wn: self.board.wn & !new_bb,
-                            wb: self.board.wb & !new_bb,
-                            wr: self.board.wr & !new_bb,
-                            wq: self.board.wq & !new_bb,
-                            wk: self.board.wk,
-                            bp: self.board.bp,
-                            bn: self.board.bn,
-                            bb: self.board.bb,
-                            br: self.board.br,
-                            bq: self.board.bq,
-                            bk: new_bb
-                        },
-                        player: self.player.clone(),
-                        turn: Color::White,
-                        context: self.context.clone(),
-                        halfmove: self.halfmove + 1
-                    }
-                }
-            }
-        }
-    }
 
-    pub fn w_pawn_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_pawn_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let blockers: u64 = self.board.get_all();
         let capturable: u64 = self.board.get_b_subjects();
-        for pos in unpack_bb(self.board.wp) {
-            res.push(
-                self.create_variant(
-                    Piece::Pawn,
-                    get_wp_moves(pos, blockers) |
-                        get_wp_captures(pos, capturable) |
-                        (self.board.wp ^ pos)
-                ));
+        self.context.checked |= wp_captures_mask(self.board.wp, !0);
+        for origin in unpack_bb(self.board.wp) {
+            for dest in unpack_bb(wp_moves_mask(origin, blockers) | wp_captures_mask(origin, capturable)) {
+                if dest & RANK_8 == 0 {
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: None
+                    });
+                }
+                else {
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Queen)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Rook)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Bishop)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Knight)
+                    });
+                }
+            }
         }
         res
     }
 
-    pub fn b_pawn_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_pawn_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let blockers: u64 = self.board.get_all();
         let capturable: u64 = self.board.get_w_subjects();
-        for pos in unpack_bb(self.board.bp) {
-            res.push(
-                self.create_variant(
-                    Piece::Pawn,
-                    get_bp_moves(pos, blockers) |
-                        get_bp_captures(pos, capturable) |
-                        (self.board.bp ^ pos)
-                ));
+        self.context.checked |= bp_captures_mask(self.board.bp, !0);
+        for origin in unpack_bb(self.board.bp) {
+            for dest in unpack_bb(bp_moves_mask(origin, blockers) | bp_captures_mask(origin, capturable)) {
+                if dest & RANK_1 == 0 {
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: None
+                    });
+                }
+                else {
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Queen)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Rook)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Bishop)
+                    });
+                    res.push(Move {
+                        piece: Piece::Pawn,
+                        origin: origin,
+                        dest: dest,
+                        promotion: Some(Piece::Knight)
+                    });
+                }
+            }
         }
         res
     }
 
-    pub fn w_knight_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_knight_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unpack_bb(self.board.wn) {
-            res.push(
-                self.create_variant(
-                    Piece::Knight,
-                    get_n_moves_precomp(pos, noncapturable) |
-                        (self.board.wn ^ pos)
-                ));
+        for origin in unpack_bb(self.board.wn) {
+            for dest in unpack_bb(n_moves_mask_precomp(origin, noncapturable) | (self.board.wn ^ origin)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Knight,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn b_knight_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_knight_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unpack_bb(self.board.bn) {
-            res.push(
-                self.create_variant(
-                    Piece::Knight,
-                    get_n_moves_precomp(pos, noncapturable) |
-                        (self.board.bn ^ pos)
-                ));
+        for origin in unpack_bb(self.board.bn) {
+            for dest in unpack_bb(n_moves_mask_precomp(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Knight,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn w_bishop_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_bishop_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unpack_bb(self.board.wb) {
-            res.push(
-                self.create_variant(
-                    Piece::Bishop,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.wb ^ pos)
-                ));
+        for origin in unpack_bb(self.board.wb) {
+            for dest in unpack_bb(b_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Bishop,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn b_bishop_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_bishop_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unpack_bb(self.board.bb) {
-            res.push(
-                self.create_variant(
-                    Piece::Bishop,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.bb ^ pos)
-                ));
+        for origin in unpack_bb(self.board.bb) {
+            for dest in unpack_bb(b_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Bishop,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn w_rook_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_rook_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unpack_bb(self.board.wr) {
-            res.push(
-                self.create_variant(
-                    Piece::Rook,
-                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.wr ^ pos)
-                ));
+        for origin in unpack_bb(self.board.wr) {
+            for dest in unpack_bb(r_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Rook,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn b_rook_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_rook_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unpack_bb(self.board.br) {
-            res.push(
-                self.create_variant(
-                    Piece::Rook,
-                    ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.br ^ pos)
-                ));
+        for origin in unpack_bb(self.board.br) {
+            for dest in unpack_bb(r_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Rook,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn w_queen_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_queen_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unpack_bb(self.board.wq) {
-            res.push(
-                self.create_variant(
-                    Piece::Queen,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.wq ^ pos)
-                ));
+        for origin in unpack_bb(self.board.wq) {
+            for dest in unpack_bb(q_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Queen,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn b_queen_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_queen_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unpack_bb(self.board.bq) {
-            res.push(
-                self.create_variant(
-                    Piece::Queen,
-                    BISHOP_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        ROOK_MAGIC_DICT.get_moves(pos, noncapturable) |
-                        (self.board.bq ^ pos)
-                ));
+        for origin in unpack_bb(self.board.bq) {
+            for dest in unpack_bb(q_moves_mask_magic(origin, noncapturable)) {
+                self.context.checked |= dest;
+                res.push(Move {
+                    piece: Piece::Queen,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn w_king_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn w_king_moves(&self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_w_noncapturable();
-        for pos in unpack_bb(self.board.wk) {
-            res.push(
-                self.create_variant(
-                    Piece::King,
-                    get_k_moves_precomp(pos, noncapturable) |
-                        (self.board.wk ^ pos)
-                ));
+        for origin in unpack_bb(self.board.wk) {
+            for dest in unpack_bb(k_moves_mask_precomp(origin, noncapturable) & !self.context.checked) {
+                res.push(Move {
+                    piece: Piece::King,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
 
-    pub fn b_king_moves(&self) -> Vec<Position> {
-        let mut res: Vec<Position> = Vec::new();
+    pub fn b_king_moves(&self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
         let noncapturable: u64 = self.board.get_b_noncapturable();
-        for pos in unpack_bb(self.board.bk) {
-            res.push(
-                self.create_variant(
-                    Piece::King,
-                    get_k_moves_precomp(pos, noncapturable)
-                ));
+        for origin in unpack_bb(self.board.bk) {
+            for dest in unpack_bb(k_moves_mask_precomp(origin, noncapturable) | !self.context.checked) {
+                res.push(Move {
+                    piece: Piece::King,
+                    origin: origin,
+                    dest: dest,
+                    promotion: None
+                });
+            }
         }
         res
     }
-}
 
-pub fn unpack_bb(mut bb: u64) -> Vec<u64> {
-    let mut res: Vec<u64> = Vec::new();
-    while bb != 0 {
-        let lsb = bb & bb.wrapping_neg();
-        res.push(lsb);
-        bb ^= lsb;
+    pub fn w_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
+        res.append(&mut self.w_pawn_moves());
+        res.append(&mut self.w_knight_moves());
+        res.append(&mut self.w_bishop_moves());
+        res.append(&mut self.w_rook_moves());
+        res.append(&mut self.w_queen_moves());
+        res.append(&mut self.w_king_moves());
+        res
     }
-    res
+
+    pub fn b_moves(&mut self) -> Vec<Move> {
+        let mut res: Vec<Move> = Vec::new();
+        res.append(&mut self.b_pawn_moves());
+        res.append(&mut self.b_knight_moves());
+        res.append(&mut self.b_bishop_moves());
+        res.append(&mut self.b_rook_moves());
+        res.append(&mut self.b_queen_moves());
+        res.append(&mut self.b_king_moves());
+        res
+    }
+
+    pub fn moves(&mut self) -> Vec<Move> {
+        match self.context.turn {
+            Color::White => self.w_moves(),
+            Color::Black => self.b_moves()
+        }
+    }
+
+    pub fn move_(&mut self, move_: Move) {
+        match self.context.turn {
+            Color::White => {
+                match move_.piece {
+                    Piece::Pawn => {
+                        self.board.wp &= !(move_.origin);
+                        if move_.promotion.is_some() {
+                            match move_.promotion.unwrap() {
+                                Piece::Queen => self.board.wq |= move_.dest,
+                                Piece::Rook => self.board.wr |= move_.dest,
+                                Piece::Bishop => self.board.wb |= move_.dest,
+                                Piece::Knight => self.board.wn |= move_.dest,
+                                _ => panic!("Invalid promotion piece")
+                            }
+                        }
+                        else {
+                            self.board.wp |= move_.dest;
+                            self.board.bp &= !(move_.dest);
+                        }
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    },
+                    Piece::Knight => {
+                        self.board.wn &= !(move_.origin);
+                        self.board.wn |= move_.dest;
+                        self.board.bp &= !(move_.dest);
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    },
+                    Piece::Bishop => {
+                        self.board.wb &= !(move_.origin);
+                        self.board.wb |= move_.dest;
+                        self.board.bp &= !(move_.dest);
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    },
+                    Piece::Rook => {
+                        self.board.wr &= !(move_.origin);
+                        self.board.wr |= move_.dest;
+                        self.board.bp &= !(move_.dest);
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    },
+                    Piece::Queen => {
+                        self.board.wq &= !(move_.origin);
+                        self.board.wq |= move_.dest;
+                        self.board.bp &= !(move_.dest);
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    },
+                    Piece::King => {
+                        self.board.wk &= !(move_.origin);
+                        self.board.wk |= move_.dest;
+                        self.board.bp &= !(move_.dest);
+                        self.board.bn &= !(move_.dest);
+                        self.board.bb &= !(move_.dest);
+                        self.board.br &= !(move_.dest);
+                        self.board.bq &= !(move_.dest);
+                    }
+                }
+            },
+            Color::Black => {
+                match move_.piece {
+                    Piece::Pawn => {
+                        self.board.bp &= !(move_.origin);
+                        if move_.promotion.is_some() {
+                            match move_.promotion.unwrap() {
+                                Piece::Queen => self.board.bq |= move_.dest,
+                                Piece::Rook => self.board.br |= move_.dest,
+                                Piece::Bishop => self.board.bb |= move_.dest,
+                                Piece::Knight => self.board.bn |= move_.dest,
+                                _ => panic!("Invalid promotion piece")
+                            }
+                        }
+                        else {
+                            self.board.bp |= move_.dest;
+                            self.board.wp &= !(move_.dest);
+                        }
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    },
+                    Piece::Knight => {
+                        self.board.bn &= !(move_.origin);
+                        self.board.bn |= move_.dest;
+                        self.board.wp &= !(move_.dest);
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    },
+                    Piece::Bishop => {
+                        self.board.bb &= !(move_.origin);
+                        self.board.bb |= move_.dest;
+                        self.board.wp &= !(move_.dest);
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    },
+                    Piece::Rook => {
+                        self.board.br &= !(move_.origin);
+                        self.board.br |= move_.dest;
+                        self.board.wp &= !(move_.dest);
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    },
+                    Piece::Queen => {
+                        self.board.bq &= !(move_.origin);
+                        self.board.bq |= move_.dest;
+                        self.board.wp &= !(move_.dest);
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    },
+                    Piece::King => {
+                        self.board.bk &= !(move_.origin);
+                        self.board.bk |= move_.dest;
+                        self.board.wp &= !(move_.dest);
+                        self.board.wn &= !(move_.dest);
+                        self.board.wb &= !(move_.dest);
+                        self.board.wr &= !(move_.dest);
+                        self.board.wq &= !(move_.dest);
+                    }
+                }
+            }
+        }
+        self.context.turn = self.context.turn.flip();
+        self.context.halfmoves += 1;
+    }
 }
 
 #[derive(Clone)]
@@ -455,6 +455,10 @@ pub struct Context {
     pub bk_castle: bool,
     pub bq_castle: bool,
     pub en_passant: u8,
+    pub in_check: bool,
+    pub checked: u64,
+    pub turn: Color,
+    pub halfmoves: u8,
 }
 
 impl Default for Context {
@@ -464,7 +468,11 @@ impl Default for Context {
             wq_castle: true,
             bk_castle: true,
             bq_castle: true,
-            en_passant: 0
+            en_passant: 0,
+            in_check: false,
+            checked: 0,
+            turn: Color::White,
+            halfmoves: 0,
         }
     }
 }

@@ -5,12 +5,13 @@
 mod board;
 mod magic;
 mod position;
-mod masks;
-mod moves;
+mod const_masks;
+mod moves_masks;
+mod mcts;
 
 use magic::*;
 use board::*;
-use masks::*;
+use const_masks::*;
 use position::*;
 // use moves::*;
 

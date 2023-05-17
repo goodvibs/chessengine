@@ -2,8 +2,7 @@ use rand::Rng;
 use std::fs::{File, metadata};
 use std::io::{BufWriter, BufReader};
 use serde::{Serialize, Deserialize};
-use crate::moves;
-use crate::masks;
+use crate::moves_masks;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -49,7 +48,7 @@ fn create_r_magic_dict() -> MagicDict {
         magics = read_magics(ROOK_MAGIC_FILE);
     }
     else {
-        magics = generate_magic_vec(masks::get_orthogonals, moves::get_r_moves);
+        magics = generate_magic_vec(moves_masks::get_orthogonals, moves_masks::r_moves_mask);
         write_magics(&magics, ROOK_MAGIC_FILE);
     }
     MagicDict {
@@ -63,7 +62,7 @@ fn create_b_magic_dict() -> MagicDict {
         magics = read_magics(BISHOP_MAGIC_FILE);
     }
     else {
-        magics = generate_magic_vec(masks::get_diagonals, moves::get_b_moves);
+        magics = generate_magic_vec(moves_masks::get_diagonals, moves_masks::b_moves_mask);
         write_magics(&magics, BISHOP_MAGIC_FILE);
     }
     MagicDict {

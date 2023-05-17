@@ -96,6 +96,16 @@ impl Default for Board {
     }
 }
 
+pub fn unpack_bb(mut bb: u64) -> Vec<u64> {
+    let mut res: Vec<u64> = Vec::new();
+    while bb != 0 {
+        let lsb = bb & bb.wrapping_neg();
+        res.push(lsb);
+        bb ^= lsb;
+    }
+    res
+}
+
 /// converts a charboard (2d array of chars) to a bitboard (u64)
 pub fn charboard_to_bitboard(array: [[char; 8]; 8]) -> u64 {
     let mut bitboard: u64 = 0;
