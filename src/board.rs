@@ -20,6 +20,7 @@ pub const INITIAL_CHARBOARD: [[char; 8]; 8] = [
     ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
 ];
 
+#[derive(Clone)]
 pub struct Board {
     pub wp: u64,
     pub wn: u64,

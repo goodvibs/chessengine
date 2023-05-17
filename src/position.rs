@@ -5,6 +5,7 @@ use crate::board::unpack_bb;
 use crate::mcts::Move;
 use crate::const_masks::*;
 
+#[derive(Clone)]
 pub struct Position {
     pub board: Board,
     pub player: Color,
@@ -302,7 +303,7 @@ impl Position {
         }
     }
 
-    pub fn move_(&mut self, move_: Move) {
+    pub fn make_move(&mut self, move_: &Move) {
         match self.context.turn {
             Color::White => {
                 match move_.piece {
